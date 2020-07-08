@@ -1,18 +1,18 @@
 import copy
 from gotypes import Player
 
+
 class Move():
-    def __init__(self, point = None, is_pass = False, is_resign = False):
+    def __init__(self, point=None, is_pass=False, is_resign=False):
         assert (point is not None) ^ is_pass ^ is_resign
         self.point = point
         self.is_play = (self.point is not None)
         self.is_pass = is_pass
         self.is_resign = is_resign
 
-
     @classmethod
     def play(cls, point):
-        return Move(point = point)
+        return Move(point=point)
 
     @classmethod
     def pass_turn(cls):
@@ -48,9 +48,10 @@ class GoString():
 
     def __eq__(self, other):
         return isinstance(other, GoString) and \
-            self.color  == other.color and \
-            self.stones == other.stones and \
-            self.liberties == other.liberties
+               self.color == other.color and \
+               self.stones == other.stones and \
+               self.liberties == other.liberties
+
 
 class Board():
     def __init__(self, num_rows, num_cols):
@@ -107,19 +108,20 @@ class Board():
                 if neighbor_string is not string:
                     neighbor_string.add_liberty(point)
             self._grid[point] = None
-            
 
     '''
     Some Utility functions
     '''
+
     def is_on_grid(self, point):
         return 1 <= point.row <= self.num_rows and \
-            1 <= point.col <= self.num_cols
+               1 <= point.col <= self.num_cols
 
     '''
     returns the content of a point on the Board: 
     a Player if a stone is on that point, or else None
     '''
+
     def get(self, point):
         string = self._grid.get(point)
         if string is None:
@@ -130,6 +132,7 @@ class Board():
     Returns the entire string of stones at a point: a GoString if a stone 
     is on that point, or else None
     '''
+
     def get_go_string(self, point):
         string = self._grid.get(point)
         if string is None:
@@ -147,13 +150,13 @@ class GameState():
     '''
     Returns the game state after applying the move
     '''
+
     def apply_move(self, move):
         if move.is_play:
             next_board = copy.deepcopy(self.board)
             next_board.place_stone(next_board, self.next_player, move.point)
         else:
             next_board = self.board
-
         return GameState(next_board, self.next_player.other, self, move)
 
     @classmethod
@@ -173,8 +176,42 @@ class GameState():
             return False
         return self.last_move.is_pass and second_last_move.is_pass
 
+    def is_move_self_capture(self, player, move):
+        if not move.is_play:
+            return False
+        next_board = copy.deepcopy(self.board)
+        next_board.place_stone(player, move.point)
+        new_string = next_board.get_go_string(move.point)
+        return new_string.num_liberties == 0
 
+    @property
+    def situation(self):
+        return (self.next_player, self.board)
 
+    def does_move_violate_ko(self, player, move):
+        if not move.is_play:
+            return False
+        next_board = copy.deepcopy(self.board)
+        next_board.place_stone(player, move.point)
+        next_situation = (player.other, next_board)
+        past_state = self.previous_state
+        while past_state is not None:
+            if past_state.situation == next_situation:
+                return True
+            past_state = past_state.previous_state
+
+        return False
+
+    def is_valid_move(self, move):
+        if self.is_over():
+            return False
+        if move.is_pass or move.is_resign:
+            return True
+        return (
+            self.board.get(move.point) is None and
+            not self.is_move_self_capture(self.next_player, move) and
+            not self.does_move_violate_ko(self.next_player, move)
+        )
 
 
 

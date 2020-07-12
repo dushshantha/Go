@@ -1,2 +1,4 @@
 .idea/*
 venv/
+dlgo/agent/__pycache__/
+dlgo/__pycache__/

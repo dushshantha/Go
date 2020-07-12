@@ -154,7 +154,7 @@ class GameState():
     def apply_move(self, move):
         if move.is_play:
             next_board = copy.deepcopy(self.board)
-            next_board.place_stone(next_board, self.next_player, move.point)
+            next_board.place_stone(self.next_player, move.point)
         else:
             next_board = self.board
         return GameState(next_board, self.next_player.other, self, move)

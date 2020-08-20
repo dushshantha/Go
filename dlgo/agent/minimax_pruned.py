@@ -31,6 +31,7 @@ class PrunedMiniaxAgent(Agent):
 
             next_state = game_state.apply_move(possible_move)
 
+            # Apply any Pruning function here
             opponent_best_outcome = best_result(next_state, self.max_depth, self.eval_fn)
             our_best_outcome = -1 * opponent_best_outcome
 
@@ -63,6 +64,46 @@ def best_result(game_state, max_depth, eval_fn):
         if our_result > best_result_so_far:
             best_result_so_far = our_result
     return best_result_so_far
+
+
+def alpha_beta_result(game_state, max_depth, best_black, best_white, eval_fn):
+    if game_state.is_over():
+        if game_state.winner() == game_state.next_player:
+            return MAX_SCORE
+        else:
+            return MIN_SCORE
+
+    if max_depth == 0:
+        return eval_fn(game_state)
+
+    best_result_so_far = MIN_SCORE
+    for candidate_move in game_state.legal_moves():
+        next_state = game_state.apply_move(candidate_move)
+        opponent_best_result = alpha_beta_result(next_state, max_depth - 1, best_black, best_white, eval_fn)
+
+        our_result = -1 * opponent_best_result
+        if our_result > best_result_so_far:
+            best_result_so_far = our_result
+
+        if game_state.next_player == Player.white:
+            if best_result_so_far > best_white:
+                best_white = best_result_so_far
+            outcome_for_black = -1 * best_result_so_far
+            if outcome_for_black < best_black:
+                return best_result_so_far
+
+        if game_state.next_player == Player.black:
+            if best_result_so_far > best_black:
+                best_black = best_result_so_far
+            outcome_for_white = -1 * best_result_so_far
+            if outcome_for_white < best_white:
+                return best_result_so_far
+    return best_result_so_far
+
+
+    return best_result_so_far
+
+
 
 def capture_diff(game_state):
     black_stones = 0
